@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <!--======================================================================================================
+		3D Rendering:
+    Three.js homepage: http://threejs.org/
+    Github: https://github.com/mrdoob/three.js/
+    Three js module: https://github.com/mrdoob/three.js/tree/dev/build
+    GLTFLoader: https://github.com/mrdoob/three.js/blob/dev/examples/jsm/loaders/GLTFLoader.js   
+    RGBELoader: https://github.com/mrdoob/three.js/blob/dev/examples/jsm/loaders/RGBELoader.js
+    OrbitControls: https://github.com/mrdoob/three.js/blob/dev/examples/jsm/controls/OrbitControls.js
+    
+    3D GLTF models:
+    "Pagani Zonda - Shooting Car" by dannysgallegos is licensed under Creative Commons Attribution. https://skfb.ly/6WWKL To view a copy of this license, visit http://creativecommons.org/licenses/by/4.0/.
+    "Lamborghini Urus" by iSteven is licensed under Creative Commons Attribution-NonCommercial. https://skfb.ly/6RHZR To view a copy of this license, visit http://creativecommons.org/licenses/by-nc/4.0/.
+    "Peugeot 3008" by iSteven is licensed under Creative Commons Attribution-NonCommercial. https://skfb.ly/6QSnv To view a copy of this license, visit http://creativecommons.org/licenses/by-nc/4.0/.
+
+		Audio:
+		Death Race 2008 OST soundtrack: https://www.youtube.com/watch?v=pXvsb83D0ZY&list=PL708D01947BE698AC&index=1
+  =============================================================================================================-->
+  
+  <head>
+    <title>Three js | Load GLTF</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+    />
+    <link type="text/css" rel="stylesheet" href="main.css" />
+  </head>
+  <style>
+    
+  </style>
+
+  <body>
+    <div id="main">
+      
+      <h1 class="h1-heading">death race 2008</h1>
+      <div class="menu">
+        <div class="face">
+            <img class="face-img" src="img/ames.jpg" alt="">
+            <button id="btn" class="btn btn1">jensen</button>
+        </div>
+        <div class="face">
+            <img class="face-img" src="img/case.jpg" alt="">
+            <button id="btn2" class="btn btn1">case</button>
+        </div>
+        <div class="face">
+            <img class="face-img" src="img/pachenko.jpg" alt="">
+            <button id="btn3" class="btn btn1">pachenko</button>
+        </div>
+      </div>       
+      
+
+      <audio id="player" autoplay loop controls hidden>
+        <source src="sounds/death-race.mp3" type="audio/mpeg" />
+      </audio>
+      <audio id="choose">
+        <source src="sounds/choose.mp3" type="audio/mpeg" />
+      </audio>
+    </div>
+
+    <script type="module">
+      var btn = document.getElementById("btn");
+      var btn2 = document.getElementById("btn2");
+      var btn3 = document.getElementById("btn3");
+      var audio = document.getElementById("player");
+      var choose = document.getElementById("choose");
+
+      btn.addEventListener("click", function () {
+        audio.play();
+        choose.play();
+        loadModel(model,9,9,9);
+      });
+
+      btn2.addEventListener("click", function () {
+        audio.play();
+        choose.play();	
+		    loadModel(model2);
+      });
+
+      btn3.addEventListener("click", function () {
+        audio.play();
+        choose.play();
+        loadModel(model3);
+      });
+
+      import * as THREE from "./build/three.module.js";
+      import { OrbitControls } from "./build/OrbitControls.js";
+      import { GLTFLoader } from "./build/GLTFLoader.js";
+      import { RGBELoader } from "./build/RGBELoader.js";
+
+      var camera, scene, renderer;
+      var car;
+      var gltf_loader = new GLTFLoader();
+      
+      var model = "gltf/pagani_zonda_shooting_car/scene.gltf";
+      var model2 = "gltf/lamborghini_urus/scene.gltf";
+      var model3 = "gltf/peugeot_3008/scene.gltf";
+
+      init();
+      loop();
+
+      function init() {
+        const container = document.createElement("div");
+        document.body.appendChild(container);
+        // ------------------------------------ *** ---------------------------------------
+
+        camera = new THREE.PerspectiveCamera(
+          75,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000
+        );
+        camera.position.set(40, 20, 30);
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xcccccc);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.outputEncoding = THREE.sRGBEncoding;
+
+        container.appendChild(renderer.domElement);
+
+        // LOAD MODEL
+        gltf_loader.load(model, function (gltf) {
+          car = gltf.scene;
+          gltf.scene.scale.set(0.1, 0.1, 0.1);
+          // scene.add(gltf.scene);
+
+          render();
+        });
+
+        var light = new THREE.PointLight(0xffffff, 2);
+        light.position.set(100, 100, 100);
+        scene.add(light);
+
+        // LOAD TEXTURE
+        const rgbe_loader = new RGBELoader();
+
+        rgbe_loader.setDataType(THREE.UnsignedByteType);
+        rgbe_loader.load("hdr/background.hdr", function (texture) {
+          const pmremGenerator = new THREE.PMREMGenerator(renderer);
+          const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+
+          scene.background = envMap;
+          scene.environment = envMap;
+
+          render();
+        });
+
+        // VIEW CONTROLS
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.addEventListener("change", render);
+        controls.minDistance = 20;
+        controls.maxDistance = 70;
+        controls.target.set(0, 0.5, 0);
+        controls.mouseButtons = {
+          LEFT: THREE.MOUSE.ROTATE,
+          MIDDLE: THREE.MOUSE.DOLLY,
+          RIGHT: THREE.MOUSE.ROTATE,
+        };
+        // controls.minPolarAngle = 0;
+        // controls.maxPolarAngle = Math.PI / 2;
+        controls.update();
+
+        window.addEventListener("resize", onWindowResize, false);
+      }
+
+      function loadModel(modelPath, x = 0.1, y = 0.1, z = 0.1) {
+        gltf_loader.load(modelPath, function (gltf) {
+          scene.remove(car);
+          car = gltf.scene;
+          gltf.scene.scale.set(x, y, z);
+          scene.add(car);
+          render();
+        });
+      }
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        render();
+      }
+
+      function render() {
+        renderer.render(scene, camera);
+      }
+
+      function loop() {
+        requestAnimationFrame(loop);
+        car.rotation.y += -0.003;        
+        renderer.render(scene, camera);
+      }
+    </script>
+  </body>
+</html>
