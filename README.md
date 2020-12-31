@@ -1,6 +1,8 @@
 # Threejs-3D-models-GLTF-loader
 Three js - 3D models GLTF loader (Death Race 2008 cars demo)
 ----------------
+NOTICE: You must run through server (run by Live server in VS code OR install Xampp -> start Apache then run through localhost)
+
 3D Rendering:
 - Three.js homepage: http://threejs.org/
 - Github: https://github.com/mrdoob/three.js/
